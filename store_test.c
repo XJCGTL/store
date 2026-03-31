@@ -27,9 +27,23 @@ uint64_t measure_normal() {
     start = read_cycles();
     for (int i = 0; i < LOOP_COUNT; i++) {
         asm volatile (
-            "sw %2, 0(%0)\n\t"
+            /* 延时：fdiv.s 高延迟，令第一条sw的地址依赖其结果 */
+            "fmv.w.x ft0, %2\n\t"
+            "fmv.w.x ft1, %2\n\t"
+            "fdiv.s ft2, ft0, ft1\n\t"
+            "fmv.x.w t4, ft2\n\t"
+            "andi t4, t4, 0\n\t"
+            "add t5, %0, t4\n\t"
+            /* 第一条store指令，地址依赖fdiv延时链 */
+            "sw %2, 0(t5)\n\t"
+            /* 两条store指令之间插入算术指令（保证仍可进入同一ROB） */
+            "add t0, %2, %2\n\t"
+            "xor t1, t0, %2\n\t"
+            "add t0, t1, t1\n\t"
+            /* 第二条store指令 */
             "sw %2, 0(%1)\n\t"
-            : : "r"(g_aligned_addr1), "r"(g_aligned_addr2), "r"(store_val) : "memory"
+            : : "r"(g_aligned_addr1), "r"(g_aligned_addr2), "r"(store_val)
+            : "memory", "ft0", "ft1", "ft2", "t0", "t1", "t4", "t5"
         );
     }
     end = read_cycles();
@@ -43,9 +57,23 @@ uint64_t measure_conflict() {
     start = read_cycles();
     for (int i = 0; i < LOOP_COUNT; i++) {
         asm volatile (
-            "sw %2, 0(%0)\n\t"
+            /* 延时：fdiv.s 高延迟，令第一条sw的地址依赖其结果 */
+            "fmv.w.x ft0, %2\n\t"
+            "fmv.w.x ft1, %2\n\t"
+            "fdiv.s ft2, ft0, ft1\n\t"
+            "fmv.x.w t4, ft2\n\t"
+            "andi t4, t4, 0\n\t"
+            "add t5, %0, t4\n\t"
+            /* 第一条store指令，地址依赖fdiv延时链 */
+            "sw %2, 0(t5)\n\t"
+            /* 两条store指令之间插入算术指令（保证仍可进入同一ROB） */
+            "add t0, %2, %2\n\t"
+            "xor t1, t0, %2\n\t"
+            "add t0, t1, t1\n\t"
+            /* 第二条store指令 */
             "sw %2, 0(%1)\n\t"
-            : : "r"(g_old_misalign_addr), "r"(g_young_split_addr), "r"(store_val) : "memory"
+            : : "r"(g_old_misalign_addr), "r"(g_young_split_addr), "r"(store_val)
+            : "memory", "ft0", "ft1", "ft2", "t0", "t1", "t4", "t5"
         );
     }
     end = read_cycles();
@@ -59,9 +87,23 @@ uint64_t measure_baseline_misalign() {
     start = read_cycles();
     for (int i = 0; i < LOOP_COUNT; i++) {
         asm volatile (
-            "sw %2, 0(%0)\n\t"
+            /* 延时：fdiv.s 高延迟，令第一条sw的地址依赖其结果 */
+            "fmv.w.x ft0, %2\n\t"
+            "fmv.w.x ft1, %2\n\t"
+            "fdiv.s ft2, ft0, ft1\n\t"
+            "fmv.x.w t4, ft2\n\t"
+            "andi t4, t4, 0\n\t"
+            "add t5, %0, t4\n\t"
+            /* 第一条store指令，地址依赖fdiv延时链 */
+            "sw %2, 0(t5)\n\t"
+            /* 两条store指令之间插入算术指令（保证仍可进入同一ROB） */
+            "add t0, %2, %2\n\t"
+            "xor t1, t0, %2\n\t"
+            "add t0, t1, t1\n\t"
+            /* 第二条store指令 */
             "sw %2, 0(%1)\n\t"
-            : : "r"(g_old_misalign_addr), "r"(g_aligned_addr3), "r"(store_val) : "memory"
+            : : "r"(g_old_misalign_addr), "r"(g_aligned_addr3), "r"(store_val)
+            : "memory", "ft0", "ft1", "ft2", "t0", "t1", "t4", "t5"
         );
     }
     end = read_cycles();
@@ -75,9 +117,23 @@ uint64_t measure_baseline_split() {
     start = read_cycles();
     for (int i = 0; i < LOOP_COUNT; i++) {
         asm volatile (
-            "sw %2, 0(%0)\n\t"
+            /* 延时：fdiv.s 高延迟，令第一条sw的地址依赖其结果 */
+            "fmv.w.x ft0, %2\n\t"
+            "fmv.w.x ft1, %2\n\t"
+            "fdiv.s ft2, ft0, ft1\n\t"
+            "fmv.x.w t4, ft2\n\t"
+            "andi t4, t4, 0\n\t"
+            "add t5, %0, t4\n\t"
+            /* 第一条store指令，地址依赖fdiv延时链 */
+            "sw %2, 0(t5)\n\t"
+            /* 两条store指令之间插入算术指令（保证仍可进入同一ROB） */
+            "add t0, %2, %2\n\t"
+            "xor t1, t0, %2\n\t"
+            "add t0, t1, t1\n\t"
+            /* 第二条store指令 */
             "sw %2, 0(%1)\n\t"
-            : : "r"(g_aligned_addr4), "r"(g_young_split_addr), "r"(store_val) : "memory"
+            : : "r"(g_aligned_addr4), "r"(g_young_split_addr), "r"(store_val)
+            : "memory", "ft0", "ft1", "ft2", "t0", "t1", "t4", "t5"
         );
     }
     end = read_cycles();
@@ -94,6 +150,12 @@ int main() {
     }
     char *buffer = (char *)_heap.start;
     memset(buffer, 0, PAGE_SIZE * 5);
+
+    // 检查首地址是否为整数页的首地址
+    if ((uintptr_t)buffer % PAGE_SIZE != 0) {
+        printf("Error: Buffer start address is not page-aligned (addr=0x%lx).\n", (unsigned long)(uintptr_t)buffer);
+        return 1;
+    }
 
     // 初始化全局地址指针
     g_old_misalign_addr = (uint32_t *)(buffer + PAGE_SIZE - 2);
